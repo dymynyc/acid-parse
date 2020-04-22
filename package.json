@@ -1,0 +1,20 @@
+{
+  "name": "acid-parse",
+  "description": "acidlisp macros to write parsers",
+  "version": "1.0.0",
+  "homepage": "https://github.com/dominictarr/acid-parse",
+  "repository": {
+    "type": "git",
+    "url": "git://github.com/dominictarr/acid-parse.git"
+  },
+  "dependencies": {},
+  "devDependencies": {
+    "hexpp": "^2.0.0"
+  },
+  "scripts": {
+    "test": "tape test/*.js"
+  },
+  "bin": "./load.js",
+  "author": "Dominic Tarr @EMovhfIrFk4NihAKnRNhrfRaqIhBv1Wj8pTxJNgvCCY=.ed25519",
+  "license": "MIT"
+}

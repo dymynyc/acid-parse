@@ -1,7 +1,10 @@
 var parse = require('acidlisp/require')(__dirname)('./acid/hello-world')
 var hexpp = require('hexpp')
+var tape = require('tape')
 
 var mem = Buffer.from(parse.memory.buffer)
+var m = require('acidlisp/require')(__dirname, mem)
+  ('acid-memory', {eval: true})
 
 function get_head_t (p) {
   return mem.readUInt32LE(p)
@@ -18,7 +21,6 @@ function get_tail (p) {
 
 function get_string (s) {
   var length = mem.readUInt32LE(s)
-  console.log(s, length, mem.slice(s, s+4))
   return mem.slice(s+4, s+4+length).toString()
 }
 
@@ -35,24 +37,37 @@ function toString(l) {
     else {
       value = '"'+get_string(get_head(l))+'"'
     }
-    console.log('()', get_head(l), get_tail(l), value)
-  
     s+=value + ' '
-//      throw new Error('type not supported')
     l = get_tail(l)
   }
   return s.trim() +')'
 }
 
 
-var input = Buffer.from("AA A  A   A")
-console.log(parse)
+function makeTest(str, test, expected) {
+  tape(str +' -> '+expected, function (t) {
+    var input = Buffer.from(str)
 
-var ptr = 10000
+    var ptr = m.alloc(input.length+4)
+    mem.writeUInt32LE(input.length+4, ptr)
+    input.copy(mem, ptr+4)
+    var v = parse[test](ptr, 0)
+    t.equal(toString(v), expected)
+    t.end()
+  })
 
-input.copy(mem, ptr+4)
-mem.writeUInt32LE(input.length, ptr)
+}
+  
+  makeTest(
+    "(AAABBCCDEfABCA BC    DEF)", 'test',
+    '("AAABBCC" "DEf" "ABCA" "BC" "DEF")')
 
-var v = parse.test(ptr, 0)
-console.log(v, input.length)
-console.log(toString(v))
+
+//  console.log(hexpp(mem.slice(0, 1024)))
+//
+//  console.log("input:"+input.toString())
+//  console.log('matched', v, {input: input.length})
+//  console.log('output:', toString(v))
+//  console.log(hexpp(mem.slice(0, 1024)))
+
+//})

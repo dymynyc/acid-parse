@@ -26,15 +26,20 @@
   (def opt_ws (mac () &(Many (ws)) ))
 
   (export test (fun (input start) {block
-    (def group (l.create 0 0 0 0))
-    (def _group group)
-    (if (eq -1
-      (Many (Or (More (Match " ")) (Text
-        (Match "A")
-;;        (Or (Match "A")
-;;        (Or (Match "B")
-;;            (Match "C")))
-      )))
-) 0 _group)
+
+    (def _group (def group (l.create 0 0 0 0)))
+    (def m [And (Match "(") [And (Many (Or
+      (Text (More
+        (Or (Match "A") (Or (Match "B") (Match "C")))
+      ))
+      (Or
+        [Text (And (Match "DE")
+          [Or (Match "F") (Match "f")])]
+
+        (More (Match " ")))
+    )) (Match ")") ]])
+;;    (if (neq m 6) (log "FAIL 1") 0)
+;;    (if (neq start 3) (log "FAIL 2") 0)
+    (if (neq -1 m) _group 0)
   }))
 )

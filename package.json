@@ -9,7 +9,8 @@
   },
   "dependencies": {},
   "devDependencies": {
-    "hexpp": "^2.0.0"
+    "hexpp": "^2.0.0",
+    "tape": "^4.13.2"
   },
   "scripts": {
     "test": "tape test/*.js"

@@ -8,6 +8,7 @@
   (def Or P.Or)
   (def Many P.Many)
   (def Text P.Text)
+  (def Group P.Group)
 
   ;;a single char of any whitespace
   (def ws (mac ()
@@ -32,11 +33,6 @@
     )
   ))
 
-;;  (export parens (fun (input start) {block
-;;    (def _group (def group (l.create 0 0 0 0)))
-;;    (def m
-;;  })
-
   (def Range (mac (lo hi) &{block
     (def c (s.at input start))
     (if (and (gte c $lo) (lte c $hi)) 1 -1)
@@ -50,11 +46,15 @@
     (And (a_to_z) (Many (Or (a_to_z) (zero_to_nine))))
   )))
 
-  [def Number (mac ()
-    &(Text
-      (Or (Match "0") (And (one_to_nine) (Many (zero_to_nine)) ))) )]
+  [def Integer (mac ()
+    &{Text
+      {Or (Match "0")
+        (And (Maybe (Match "-"))
+          (And (one_to_nine) (Many (zero_to_nine))) )
+     }}
+  )]
 
-  (export number {Parser (Number)})
+  (export number {Parser (Integer)})
 
   (def Surround (mac (op content cl)
     &{And (Match $op) (And $content (Match $cl))}
@@ -64,14 +64,39 @@
     &(And $content (Many (And $separator $content)))
   ))
 
-  (export recurse (fun (input start) (block
+  ;;simplest, is the function returns a (cons matched group)
+  ;;could use a global to store the group in but then
+
+  ;; this is a hack. currently, GROUP_GLOBAL is stored
+  ;; in data section, with pointer inlined. we couldn't
+  ;; reassign it, but we can mutate it.
+  ;; this would still work if we had globals, without
+  ;; updating data section. but it that case we can remove the cons.
+
+  (def GROUP_GLOBAL (l.create 0 0 0 0))
+  (def Call (mac (fn) &{block
+    (def m ($fn input start group))
+    ;;(if (neq -1 m) -1
+    (set group (l.get_head GROUP_GLOBAL))
+    m
+  }))
+
+  (def _recurse (fun _recurse (input start group) {block
+    (def m (Group (Surround "("
+      (Maybe (Join (Or (Symbol) (Call _recurse)) (man_ws)))
+      ")" )))
+    (l.set_head GROUP_GLOBAL 1 group)
+    m
+  }))
+
+  (def recurse (fun recurse (input start) (block
     (def group (def _g (l.create 0 0 0 0)))
-    (def m (Surround "(" (Maybe (Join (Symbol) (man_ws))) ")"))
-    (if (neq -1 m) _g 0)
+    (if (neq -1 (_recurse input start group)) _g 0)
   )))
 
+  (export recurse recurse)
+
   (export test (fun (input start) {block
-;;  (export test  {Parser
     (def _group (def group (l.create 0 0 0 0)))
     (def m 
       [And (Match "(") [And (Many (Or

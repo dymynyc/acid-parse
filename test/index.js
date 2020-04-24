@@ -30,9 +30,9 @@ function toString(l) {
     var value
     if(get_head_t(l) == 0)
       value = 'nil'
-    else if(get_head_t(l) == 1)
+    else if(get_head_t(l) == 1) // list
       value = toString(get_head(l))
-    else if(get_head_t(l) == 2)
+    else if(get_head_t(l) == 2) //number
       value = get_head(l)
     else {
       value = '"'+get_string(get_head(l))+'"'
@@ -57,7 +57,6 @@ function makeTest(str, test, expected) {
   })
 
 }
-  
   makeTest(
     "(AAABBCCDEfABCA BC    DEF)", 'test',
     '("AAABBCC" "DEf" "ABCA" "BC" "DEF")')
@@ -65,4 +64,12 @@ function makeTest(str, test, expected) {
   makeTest("123", "number", '("123")')
   makeTest("10000", "number", '("10000")')
   makeTest("0", 'number', '("0")')
+  makeTest("-1", 'number', '("-1")')
+  makeTest("1", 'number', '("1")')
+
+  makeTest("(foo bar baz)", 'recurse', '(("foo" "bar" "baz"))')
+  makeTest("(foo (bar baz))", 'recurse', '(("foo" ("bar" "baz")))')
+  makeTest("((bar baz))", 'recurse', '((("bar" "baz")))')
+  makeTest("((((((x))))))", 'recurse', '((((((("x")))))))')
+
 //})

@@ -62,12 +62,7 @@ function makeTest(str, test, expected) {
     "(AAABBCCDEfABCA BC    DEF)", 'test',
     '("AAABBCC" "DEf" "ABCA" "BC" "DEF")')
 
-
-//  console.log(hexpp(mem.slice(0, 1024)))
-//
-//  console.log("input:"+input.toString())
-//  console.log('matched', v, {input: input.length})
-//  console.log('output:', toString(v))
-//  console.log(hexpp(mem.slice(0, 1024)))
-
+  makeTest("123", "number", '("123")')
+  makeTest("10000", "number", '("10000")')
+  makeTest("0", 'number', '("0")')
 //})

@@ -72,7 +72,7 @@
 ;;    (def len (strings.length str))
 ;;    &(if (strings.equal_at input start $str 0 $len) $len -1) )))
 
-  (def Or (mac (a b) 
+  (def Or (mac (a b)
     &(if (neq -1 (def or_m $a)) or_m (if (neq -1 (def or_m $b)) or_m -1))
   ))
 

@@ -1,4 +1,4 @@
-var parse = require('acidlisp/require')(__dirname)('./acid/hello-world')
+var parse = require('acidlisp/require')(__dirname)('../acid')
 var hexpp = require('hexpp')
 var tape = require('tape')
 
@@ -58,21 +58,18 @@ function makeTest(str, test, expected) {
   })
 
 }
-  makeTest(
-    "(AAABBCCDEfABCA BC    DEF)", 'test',
-    '("AAABBCC" "DEf" "ABCA" "BC" "DEF")')
 
-  makeTest("123",   "number",   '(123)')
-  makeTest("10000", "number", '(10000)')
-  makeTest("0",     'number',     '(0)')
-  makeTest("-1",    'number',    '(-1)')
-  makeTest("1",     'number',     '(1)')
+  makeTest("123",   "int32",   '(123)')
+  makeTest("10000", "int32", '(10000)')
+  makeTest("0",     'int32',     '(0)')
+  makeTest("-1",    'int32',    '(-1)')
+  makeTest("1",     'int32',     '(1)')
 
-  makeTest("(foo bar baz)",    'recurse', '(("foo" "bar" "baz"))')
-  makeTest("(foo (bar baz))",  'recurse', '(("foo" ("bar" "baz")))')
-  makeTest("((bar baz))",      'recurse', '((("bar" "baz")))')
-  makeTest("(x nil y)",        'recurse', '(("x" nil "y"))')
-  makeTest("((((((x))))))",    'recurse', '((((((("x")))))))')
-  makeTest("(x (y))",          'recurse', '(("x" ("y")))')
-  makeTest("((x) y)",          'recurse', '((("x") "y"))')
-  makeTest("(x (y) z)",        'recurse', '(("x" ("y") "z"))')
+  makeTest("(foo bar baz)",    'parse', '(("foo" "bar" "baz"))')
+  makeTest("(foo (bar baz))",  'parse', '(("foo" ("bar" "baz")))')
+  makeTest("((bar baz))",      'parse', '((("bar" "baz")))')
+  makeTest("(x nil y)",        'parse', '(("x" nil "y"))')
+  makeTest("((((((x))))))",    'parse', '((((((("x")))))))')
+  makeTest("(x (y))",          'parse', '(("x" ("y")))')
+  makeTest("((x) y)",          'parse', '((("x") "y"))')
+  makeTest("(x (y) z)",        'parse', '(("x" ("y") "z"))')

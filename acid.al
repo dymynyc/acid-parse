@@ -1,6 +1,5 @@
 (module
-  (def P (import "acid-parse"))
-  (def s (import "acid-strings"))
+  (def P (import "."))
   (def l (import "acid-lists"))
   (def i (import "acid-int_to_string"))
 
@@ -48,8 +47,6 @@
       ]}
   )]
 
-  (export number {Parser (Integer)})
-
   (def Surround (mac (op content cl)
     &{And (Match $op) (And $content (Match $cl))}
   ))
@@ -87,24 +84,13 @@
     m
   }))
 
-  (def recurse (fun recurse (input start) (block
+  (def parse (fun (input start) (block
     (def group (def _g (l.create 0 0 0 0)))
     (if (neq -1 (_recurse input start group)) (l.get_tail _g) 0)
   )))
 
-  (export recurse recurse)
 
-  (export test (Parser
-    [And (Match "(") [And (Many (Or
-      (Text (More
-        (Or (Match "A") (Or (Match "B") (Match "C")))
-      ))
-      (Or
-        [Text
-          (And (Match "DE")
-          [Or  (Match "F")
-               (Match "f")] )]
-          (man_ws))
-    )) (Match ")") ]];;)
-    ))
+  ;; functions
+  (export int32 {Parser (Integer)})
+  (export parse parse)
 )

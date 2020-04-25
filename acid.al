@@ -1,7 +1,7 @@
 (module
   (def P (import "."))
   (def l (import "acid-lists"))
-  (def i (import "acid-int_to_string"))
+  (def i (import "acid-ints"))
 
   (def And P.And)
   (def Match P.Match)

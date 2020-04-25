@@ -33,7 +33,7 @@ function toString(l) {
     else if(get_head_t(l) == 1) // list
       value = toString(get_head(l))
     else if(get_head_t(l) == 2) //number
-      value = get_head(l)
+      value = get_head(l)|0
     else {
       value = '"'+get_string(get_head(l))+'"'
     }
@@ -62,20 +62,20 @@ function makeTest(str, test, expected) {
     "(AAABBCCDEfABCA BC    DEF)", 'test',
     '("AAABBCC" "DEf" "ABCA" "BC" "DEF")')
 //
-  makeTest("123", "number", '("123")')
-  makeTest("10000", "number", '("10000")')
-  makeTest("0", 'number', '("0")')
-  makeTest("-1", 'number', '("-1")')
-  makeTest("1", 'number', '("1")')
+  makeTest("123",   "number",   '(123)')
+  makeTest("10000", "number", '(10000)')
+  makeTest("0",     'number',     '(0)')
+  makeTest("-1",    'number',    '(-1)')
+  makeTest("1",     'number',     '(1)')
 //
-  makeTest("(foo bar baz)", 'recurse', '(("foo" "bar" "baz"))')
-  makeTest("(foo (bar baz))", 'recurse', '(("foo" ("bar" "baz")))')
-  makeTest("((bar baz))", 'recurse', '((("bar" "baz")))')
-  makeTest("(x nil y)", 'recurse', '(("x" nil "y"))')
-  makeTest("((((((x))))))", 'recurse', '((((((("x")))))))')
-  makeTest("(x (y))", 'recurse', '(("x" ("y")))')
-  makeTest("((x) y)", 'recurse', '((("x") "y"))')
-  makeTest("(x (y) z)", 'recurse', '(("x" ("y") "z"))')
+  makeTest("(foo bar baz)",    'recurse', '(("foo" "bar" "baz"))')
+  makeTest("(foo (bar baz))",  'recurse', '(("foo" ("bar" "baz")))')
+  makeTest("((bar baz))",      'recurse', '((("bar" "baz")))')
+  makeTest("(x nil y)",        'recurse', '(("x" nil "y"))')
+  makeTest("((((((x))))))",    'recurse', '((((((("x")))))))')
+  makeTest("(x (y))",          'recurse', '(("x" ("y")))')
+  makeTest("((x) y)",          'recurse', '((("x") "y"))')
+  makeTest("(x (y) z)",        'recurse', '(("x" ("y") "z"))')
 
 tape('what should empty list look like?', function (t) {
   console.error(toString(parse.fake()))

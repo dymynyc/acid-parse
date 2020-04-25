@@ -2,6 +2,7 @@
   (def P (import "acid-parse"))
   (def s (import "acid-strings"))
   (def l (import "acid-lists"))
+  (def i (import "acid-int_to_string"))
 
   (def And P.And)
   (def Match P.Match)
@@ -46,12 +47,31 @@
     (And (a_to_z) (Many (Or (a_to_z) (zero_to_nine))))
   )))
 
+  [def Map (mac (rule type value) {block
+    (def M &matched)
+    &{block
+    (def _start start)
+
+    (if (neq -1 (def text_m $rule))
+      ;; if the rule matched, copy the text into group list
+    (block
+      (set start _start)
+      (def $(quote matched) text_m) ;;sets the var that the
+      (set group (l.set_tail group 1 (l.create $type $value 0 0)))
+    ))
+    text_m
+  }})]
+
   [def Integer (mac ()
-    &{Text
+    &{Map
       {Or (Match "0")
         (And (Maybe (Match "-"))
           (And (one_to_nine) (Many (zero_to_nine))) )
-     }}
+      } 2 [block
+        (log (i.encode start))
+        (log "\n")
+        (i.decode input start (add start matched))
+      ]}
   )]
 
   (export number {Parser (Integer)})
@@ -81,23 +101,6 @@
     (l.set_head GROUP_GLOBAL 0 0)
     m
   }))
-
-  [def Map (mac (rule type value) &{block
-    (def _start start)
-   (if (neq -1 (def text_m $rule))
-      ;; if the rule matched, copy the text into group list
-      (if (l.get_head group)
-        (block
-          (def v $value)
-          (set group
-            (l.set_tail group 1 (l.create $type v 0 0)))
-          (l.set_head group $type v)
-        )
-      )
-    )
-    text_m
-  })]
-
 
   (def Nil (mac () &(Map (Match "nil") 0 0) ))
 

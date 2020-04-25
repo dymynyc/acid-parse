@@ -30,9 +30,12 @@
   (def zero_to_nine (mac () &(Range 48  57) ))
   (def one_to_nine  (mac () &(Range 49  57) ))
   (def a_to_z       (mac () &(Range 97 122) ))
+  (def A_to_Z       (mac () &(Range 65  90) ))
+  
+  (def letters (mac () &(Or (a_to_z) (Or (A_to_Z) (Match "_")) )))
 
   (def Symbol (mac () &(Text
-    (And (a_to_z) (Many (Or (a_to_z) (zero_to_nine))))
+    (And (letters) (Many (Or (letters) (zero_to_nine))))
   )))
 
   [def Integer (mac ()
@@ -89,6 +92,23 @@
     (if (neq -1 (_recurse input start group)) (l.get_tail _g) 0)
   )))
 
+
+  ;; macros
+
+;;TODO: enable exporting macros and functions to be compiled
+;;      at the same time
+
+;;  (export ws ws)
+;;  (export man_ws man_ws)
+;;  (export opt_ws opt_ws)
+;;  (export zero_to_nine zero_to_nine)
+;;  (export one_to_nine one_to_nine)
+;;  (export a_to_z a_to_z)
+;;  (export Nil Nil)
+;;  (export Value Value)
+;;  (export Integer Integer)
+;;  (export Surround Surround)
+;;  (export Join Join)
 
   ;; functions
   (export int32 {Parser (Integer)})

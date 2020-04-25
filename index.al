@@ -16,11 +16,53 @@
     )
   )))
 
-;;  [def append (fun (pX type v)
-;;    (if (lists.get_head pX)
-;;      (lists.set_tail pX (lists.create type v 0 0))
-;;      (block (lists.set_head pX type v) pX)
-;;    ))]
+  ;; Match - matches a string literal
+  (def Match (mac (str) (list _match str 0)))
+
+  ;; matches between high and low ascii character values
+
+  (def Range (mac (lo hi) &{block
+    (def c (strings.at input start))
+    (if (and (gte c $lo) (lte c $hi)) 1 -1)
+  }))
+
+  (def Or (mac (a b)
+    &(if (neq -1 (def or_m $a)) or_m (if (neq -1 (def or_m $b)) or_m -1))
+  ))
+
+  (def And [mac (a b)
+    &{block
+      (def and_start start) ;;_start will be made hygenic
+      (if
+        (neq -1 (def and_m1 $a))
+        [block
+          (set start (add and_start and_m1))
+          (if
+            (neq -1 (def and_m2 $b))
+            (add and_m1 and_m2) ;; <-- return  value if both match
+            (block (set start and_start) -1)
+          )
+        ]
+        (block (set start and_start) -1)
+      )
+    }])
+
+  (def Many [mac (a) &{block
+    (def many_m (def many_m2 0))
+    (def _start start)
+    (loop (neq -1 (def many_m $a))
+      (block
+        (set start (set _start (add _start many_m)))
+        (set many_m2 (add many_m2 many_m))
+      )
+    )
+    ;;(set start (add _start many_m2))
+    many_m2
+  }])
+
+  (def More [mac (a) &(And $a (Many $a))])
+
+  (def Maybe [mac (a) &(Or $a 0)])
 
   [def Group (mac (rule) &{block
     (def _startY start) ;;XX unused?
@@ -48,12 +90,6 @@
     m
   })]
 
-;;  (def log_int (mac (label int) &{block
-;;    (log $label)
-;;    (log (i2s.int_to_string $int))
-;;    (log "\n")
-;;  }))
-
   [def Text (mac (rule) &{block
     (def _start start)
     (if (neq -1 (def text_m $rule))
@@ -65,64 +101,33 @@
             0 0) ))
     )
     text_m
-  })]
+ })]
 
-  (def Match (mac (str) (list _match str 0)))
-
-;;  (def Match (mac (str) (block
-;;    (def len (strings.length str))
-;;    &(if (strings.equal_at input start $str 0 $len) $len -1) )))
-
-  (def Or (mac (a b)
-    &(if (neq -1 (def or_m $a)) or_m (if (neq -1 (def or_m $b)) or_m -1))
+  (def Parser (mac (pattern) (block
+      &(fun (input start) {block
+        (def _G (def $(quote group) (lists.create 0 0 0 0)))
+        (def m $pattern)
+        (if (neq -1 m) (lists.get_tail _G) 0)
+      })
+    )
   ))
 
-;;  (def Or (mac (a b) &(block
-;;    (def or_start start)
-;;    (if (neq -1 (def or_m $a))
-;;      or_m
-;;      (block
-;;        (set start or_start)
-;;        (if (neq -1 (def or_m $b)) or_m -1) ))
-;;  )))
-
-  (def And [mac (a b)
+  [def Map (mac (rule type value) {block
+    (def M &matched)
     &{block
-      (def and_start start) ;;_start will be made hygenic
-      (if
-        (neq -1 (def and_m1 $a))
-        [block
-          (set start (add and_start and_m1))
-          (if
-            (neq -1 (def and_m2 $b))
-            (block
-              (def and_total (add and_m1 and_m2))
-              and_total
-            )
-               ;;<-- return  value if both match
-            (block (set start and_start) -1)
-          )
-        ]
-        (block (set start and_start) -1)
-      )
-    }])
-
-  (def Many [mac (a) &{block
-    (def many_m (def many_m2 0))
     (def _start start)
-    (loop (neq -1 (def many_m $a))
-      (block
-        (set start (set _start (add _start many_m)))
-        (set many_m2 (add many_m2 many_m))
-      )
-    )
-    ;;(set start (add _start many_m2))
-    many_m2
-  }])
 
-  (def More [mac (a) &(And $a (Many $a))])
+    (if (neq -1 (def text_m $rule))
+      ;; if the rule matched, copy the text into group list
+    (block
+      (set start _start)
+      (def $(quote matched) text_m) ;;sets the var that the
+      (set group
+        (lists.set_tail group 1 (lists.create $type $value 0 0)))
+    ))
+    text_m
+  }})]
 
-  (def Maybe [mac (a) &(Or $a 0)])
 
   (export Match Match)
   (export And And)
@@ -132,5 +137,7 @@
   (export Maybe Maybe)
   (export Group Group)
   (export Text Text)
-
+  (export Parser Parser)
+  (export Map Map)
+  (export Range Range)
 )

@@ -61,13 +61,13 @@ function makeTest(str, test, expected) {
   makeTest(
     "(AAABBCCDEfABCA BC    DEF)", 'test',
     '("AAABBCC" "DEf" "ABCA" "BC" "DEF")')
-//
+
   makeTest("123",   "number",   '(123)')
   makeTest("10000", "number", '(10000)')
   makeTest("0",     'number',     '(0)')
   makeTest("-1",    'number',    '(-1)')
   makeTest("1",     'number',     '(1)')
-//
+
   makeTest("(foo bar baz)",    'recurse', '(("foo" "bar" "baz"))')
   makeTest("(foo (bar baz))",  'recurse', '(("foo" ("bar" "baz")))')
   makeTest("((bar baz))",      'recurse', '((("bar" "baz")))')
@@ -76,8 +76,3 @@ function makeTest(str, test, expected) {
   makeTest("(x (y))",          'recurse', '(("x" ("y")))')
   makeTest("((x) y)",          'recurse', '((("x") "y"))')
   makeTest("(x (y) z)",        'recurse', '(("x" ("y") "z"))')
-
-tape('what should empty list look like?', function (t) {
-  console.error(toString(parse.fake()))
-  t.end()
-})

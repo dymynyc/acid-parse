@@ -10,6 +10,9 @@
   (def Many P.Many)
   (def Text P.Text)
   (def Group P.Group)
+  (def Map P.Map)
+  (def Range P.Range)
+  (def Parser P.Parser)
 
   ;;a single char of any whitespace
   (def ws (mac ()
@@ -25,20 +28,6 @@
   ;; zero or  more repeated whitespace
   (def opt_ws (mac () &(Many (ws)) ))
 
-  (def Parser (mac (pattern) (block
-      &(fun (input start) {block
-        (def _G (def $(quote group) (l.create 0 0 0 0)))
-        (def m $pattern)
-        (if (neq -1 m) (l.get_tail _G) 0)
-      })
-    )
-  ))
-
-  (def Range (mac (lo hi) &{block
-    (def c (s.at input start))
-    (if (and (gte c $lo) (lte c $hi)) 1 -1)
-  }))
-
   (def zero_to_nine (mac () &(Range 48  57) ))
   (def one_to_nine  (mac () &(Range 49  57) ))
   (def a_to_z       (mac () &(Range 97 122) ))
@@ -46,21 +35,6 @@
   (def Symbol (mac () &(Text
     (And (a_to_z) (Many (Or (a_to_z) (zero_to_nine))))
   )))
-
-  [def Map (mac (rule type value) {block
-    (def M &matched)
-    &{block
-    (def _start start)
-
-    (if (neq -1 (def text_m $rule))
-      ;; if the rule matched, copy the text into group list
-    (block
-      (set start _start)
-      (def $(quote matched) text_m) ;;sets the var that the
-      (set group (l.set_tail group 1 (l.create $type $value 0 0)))
-    ))
-    text_m
-  }})]
 
   [def Integer (mac ()
     &{Map
@@ -83,9 +57,6 @@
   (def Join (mac (content separator)
     &(And $content (Many (And $separator $content)))
   ))
-
-  ;;simplest, is the function returns a (cons matched group)
-  ;;could use a global to store the group in but then
 
   ;; this is a hack. currently, GROUP_GLOBAL is stored
   ;; in data section, with pointer inlined. we couldn't
@@ -123,28 +94,17 @@
 
   (export recurse recurse)
 
-;;  (export test (fun (input start) {block
-;;    (def _group (def group (l.create 0 0 0 0)))
-;;    (def m 
-    (export test (Parser
-      [And (Match "(") [And (Many (Or
-        (Text (More
-          (Or (Match "A") (Or (Match "B") (Match "C")))
-        ))
-        (Or
-          [Text
-            (And (Match "DE")
-            [Or  (Match "F")
-                 (Match "f")] )]
-            (man_ws))
-      )) (Match ")") ]];;)
+  (export test (Parser
+    [And (Match "(") [And (Many (Or
+      (Text (More
+        (Or (Match "A") (Or (Match "B") (Match "C")))
       ))
-;;    (if (neq -1 m) _group 0)
-;;  }))
-
-  (export fake (fun ()
-    (l.create 2 "foo"
-      1 (l.create 1 (l.create 0 0 0 0)
-        1 (l.create 2 "bar" 0 0) ))
-  ))
+      (Or
+        [Text
+          (And (Match "DE")
+          [Or  (Match "F")
+               (Match "f")] )]
+          (man_ws))
+    )) (Match ")") ]];;)
+    ))
 )

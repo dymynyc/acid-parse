@@ -25,17 +25,24 @@
   [def Group (mac (rule) &{block
     (def _startY start) ;;XX unused?
     ;; append an empty list to group
-    (set group (append (def _group group) 1 (lists.create 0 0 0 0)))
+
+    (lists.set_tail group
+      1 (def parent (lists.create 1 (def new_group (lists.create 0 0 0 0)) 0 0)) )
+
+    (set group new_group)
     (if (neq -1 (def m $rule))
-
-      ;; if the rule matched, keep the group we made
-      (set group (lists.get_tail _group))
-
+      ;; point `group` var back to list where our group started.
+      ;; it should still have an empty tail
+      (block
+        (lists.set_head parent 1 (lists.get_tail (lists.get_head parent)))
+        (set group parent)
+      )
       ;; else, revert to the old group.
       ;; TODO: free memory or implement GC
       (block
-        (lists.set_tail _group 0 0) ;;discard.
-        (set group _group)
+        ;; oh, need to undo the head pointer?
+        (lists.set_tail (lists.get_head parent) 0 0) ;;discard, but leave an empty group
+        (set group parent)
       )
     )
     m
@@ -49,19 +56,13 @@
 
   [def Text (mac (rule) &{block
     (def _start start)
-;;    (log_int "  pos???:" start)
-   (if (neq -1 (def text_m $rule))
+    (if (neq -1 (def text_m $rule))
       ;; if the rule matched, copy the text into group list
-      (block
-        (def value (strings.slice input _start (add _start text_m)))
-
-        (if (lists.get_head group)
-          (set group
-            (lists.set_tail group 1 (lists.create 3 value 0 0)))
-          (lists.set_head group 3 value)
-
-        )
-      )
+      (set group
+        (lists.set_tail group
+          1 (lists.create
+            3 (strings.slice input _start (add _start text_m))
+            0 0) ))
     )
     text_m
   })]

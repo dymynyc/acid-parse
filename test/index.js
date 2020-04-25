@@ -37,6 +37,7 @@ function toString(l) {
     else {
       value = '"'+get_string(get_head(l))+'"'
     }
+//    console.error(value, get_head_t(l), l)
     s+=value + ' '
     l = get_tail(l)
   }
@@ -60,16 +61,23 @@ function makeTest(str, test, expected) {
   makeTest(
     "(AAABBCCDEfABCA BC    DEF)", 'test',
     '("AAABBCC" "DEf" "ABCA" "BC" "DEF")')
-
+//
   makeTest("123", "number", '("123")')
   makeTest("10000", "number", '("10000")')
   makeTest("0", 'number', '("0")')
   makeTest("-1", 'number', '("-1")')
   makeTest("1", 'number', '("1")')
-
+//
   makeTest("(foo bar baz)", 'recurse', '(("foo" "bar" "baz"))')
   makeTest("(foo (bar baz))", 'recurse', '(("foo" ("bar" "baz")))')
   makeTest("((bar baz))", 'recurse', '((("bar" "baz")))')
+  makeTest("(x nil y)", 'recurse', '(("x" nil "y"))')
   makeTest("((((((x))))))", 'recurse', '((((((("x")))))))')
+  makeTest("(x (y))", 'recurse', '(("x" ("y")))')
+  makeTest("((x) y)", 'recurse', '((("x") "y"))')
+  makeTest("(x (y) z)", 'recurse', '(("x" ("y") "z"))')
 
-//})
+tape('what should empty list look like?', function (t) {
+  console.error(toString(parse.fake()))
+  t.end()
+})

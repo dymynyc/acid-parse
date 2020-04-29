@@ -44,8 +44,6 @@
         (And (Maybe (Match "-"))
           (And (one_to_nine) (Many (zero_to_nine))) )
       } 2 [block
-        (log (i.encode start))
-        (log "\n")
         (i.decode input start (add start matched))
       ]}
   )]

@@ -4,6 +4,8 @@
 
 
   ;;internals to Match
+  ;;could shrink the output nearly 8x by checking with i64 types.
+  ;;oh would need to implement that... i32 then.
   (def _Match (mac R (str i) (block
     (def len (strings.length str))
     (if (eq i (sub len 1))

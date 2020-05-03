@@ -1,7 +1,13 @@
 (module
-  (def P (import "."))
-  (def l (import "acid-lists"))
-  (def i (import "acid-ints"))
+  (def P    (import "."))
+  (def l    (import "acid-lists"))
+  (def i    (import "acid-ints"))
+  (def ht   (import "acid-hashtable"))
+  (def hash (import "acid-hashtable/djb2"))
+  (def S    (import "acid-strings"))
+
+  ;;will be 8k+12 bytes
+  (def syms (ht.create 1024 0))
 
   (def And P.And)
   (def Match P.Match)
@@ -34,9 +40,20 @@
   
   (def letters (mac () &(Or (a_to_z) (Or (A_to_Z) (Match "_")) )))
 
-  (def Symbol (mac () &(Text
-    (And (letters) (Many (Or (letters) (zero_to_nine))))
-  )))
+;;  (def Symbol (mac () &(Text
+;;    (And (letters) (Many (Or (letters) (zero_to_nine))))
+;;  )))
+  [def Symbol (mac ()
+    &{Map
+      (And (letters) (Many (Or (letters) (zero_to_nine))))
+      3 [block
+        (def k (hash.bytes (add 4 input start) matched))
+        ;; don't create a new symbol if it's already in the table.
+        (if (ht.has syms k) (ht.get syms k)
+          (ht.set syms k
+            (S.slice input start (add start matched))
+      ))
+      ]})]
 
   [def Integer (mac ()
     &{Map
@@ -62,6 +79,8 @@
   ;; this would still work if we had globals, without
   ;; updating data section. but it that case we can remove the cons.
 
+  ;; better would be if we could return two values...
+
   (def GROUP_GLOBAL (l.create 0 0 0 0))
   (def Call (mac (fn) &{block
     (def m ($fn input start group))
@@ -81,7 +100,7 @@
     (def m (Group (Surround "("
       (Maybe (Join (Or (Value) (Call _recurse)) (man_ws)))
       ")" )))
-    (l.set_head GROUP_GLOBAL 1 group)  
+    (l.set_head GROUP_GLOBAL 1 group)
     m
   }))
 
@@ -89,7 +108,6 @@
     (def group (def _g (l.create 0 0 0 0)))
     (if (neq -1 (_recurse input start group)) (l.get_tail _g) 0)
   )))
-
 
   ;; macros
 

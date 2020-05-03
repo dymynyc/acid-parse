@@ -73,3 +73,15 @@ function makeTest(str, test, expected) {
   makeTest("(x (y))",          'parse', '(("x" ("y")))')
   makeTest("((x) y)",          'parse', '((("x") "y"))')
   makeTest("(x (y) z)",        'parse', '(("x" ("y") "z"))')
+
+tape('test symbols are equal', function (t) {
+  var input = Buffer.from('(foo foo)')
+  var ptr = m.alloc(input.length+4)
+  mem.writeUInt32LE(input.length+4, ptr)
+  input.copy(mem, ptr+4)
+  var v = get_head(parse.parse(ptr, 0))
+  t.equal(get_head(v), get_head(get_tail(v)))
+  t.notEqual(v, get_tail(v)) //make sure we arn't fooling ourselves
+  t.equal(get_string(get_head(v)), get_string(get_head(get_tail(v))))
+  t.end()
+})

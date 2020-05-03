@@ -6,6 +6,8 @@
   (def hash (import "acid-hashtable/djb2"))
   (def S    (import "acid-strings"))
 
+  ;; 1 - cons, 2 - int, 3 - string, 4 - symbol
+
   ;;will be 8k+12 bytes
   (def syms (ht.create 1024 0))
 
@@ -40,13 +42,10 @@
   
   (def letters (mac () &(Or (a_to_z) (Or (A_to_Z) (Match "_")) )))
 
-;;  (def Symbol (mac () &(Text
-;;    (And (letters) (Many (Or (letters) (zero_to_nine))))
-;;  )))
   [def Symbol (mac ()
     &{Map
       (And (letters) (Many (Or (letters) (zero_to_nine))))
-      3 [block
+      4 [block
         (def k (hash.bytes (add 4 input start) matched))
         ;; don't create a new symbol if it's already in the table.
         (if (ht.has syms k) (ht.get syms k)

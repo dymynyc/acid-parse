@@ -34,9 +34,12 @@ function toString(l) {
       value = toString(get_head(l))
     else if(get_head_t(l) == 2) //number
       value = get_head(l)|0
-    else {
+    else if(get_head_t(l) == 3)
       value = '"'+get_string(get_head(l))+'"'
-    }
+    else if(get_head_t(l) == 4)
+      value = get_string(get_head(l))
+    else
+      throw new Error('unknown type')
 //    console.error(value, get_head_t(l), l)
     s+=value + ' '
     l = get_tail(l)
@@ -65,14 +68,14 @@ function makeTest(str, test, expected) {
   makeTest("-1",    'int32',    '(-1)')
   makeTest("1",     'int32',     '(1)')
 
-  makeTest("(foo bar baz)",    'parse', '(("foo" "bar" "baz"))')
-  makeTest("(foo (bar baz))",  'parse', '(("foo" ("bar" "baz")))')
-  makeTest("((bar baz))",      'parse', '((("bar" "baz")))')
-  makeTest("(x nil y)",        'parse', '(("x" nil "y"))')
-  makeTest("((((((x))))))",    'parse', '((((((("x")))))))')
-  makeTest("(x (y))",          'parse', '(("x" ("y")))')
-  makeTest("((x) y)",          'parse', '((("x") "y"))')
-  makeTest("(x (y) z)",        'parse', '(("x" ("y") "z"))')
+  makeTest("(foo bar baz)",    'parse', '((foo bar baz))')
+  makeTest("(foo (bar baz))",  'parse', '((foo (bar baz)))')
+  makeTest("((bar baz))",      'parse', '(((bar baz)))')
+  makeTest("(x nil y)",        'parse', '((x nil y))')
+  makeTest("((((((x))))))",    'parse', '(((((((x)))))))')
+  makeTest("(x (y))",          'parse', '((x (y)))')
+  makeTest("((x) y)",          'parse', '(((x) y))')
+  makeTest("(x (y) z)",        'parse', '((x (y) z))')
 
 tape('test symbols are equal', function (t) {
   var input = Buffer.from('(foo foo)')

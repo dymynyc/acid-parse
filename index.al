@@ -1,75 +1,61 @@
 (module
   (def strings (import "acid-strings"))
-  (def lists   (import "acid-lists"))
+;;  (def lists   (import "acid-lists"))
 
+  ;; matches an exact string either completely or not at all
 
-  ;;internals to Match
-  ;;could shrink the output nearly 8x by checking with i64 types.
-  ;;oh would need to implement that... i32 then.
-  (def _Match (mac R (str i) (block
-    (def len (strings.length str))
-    (if (eq i (sub len 1))
-      &(if (eq (strings.at input (add start $i)) $(strings.at str i)) $len -1)
-      &(if
-        (eq (strings.at input (add start $i)) $(strings.at str i))
-        (R $str $(add 1 i))
-        -1)
-    )
-  )))
-
-  ;; Match - matches a string literal
-  (def Match (mac (str) (list _Match str 0)))
+  (def Match (fun (str) (block
+    (def l (strings.length str))
+    (fun (input start end groups)
+      (if (lt (sub end start) l) -1 ;;check enough length remaining
+        (if (strings.equal_at input start str 0 l) (strings.length str) -1)
+      )
+    ))
+  ))
 
   ;; Range - matches between high and low ascii character values
 
-  (def Range (mac (lo hi) &{block
-    (def c (strings.at input start))
-    (if (and (gte c $lo) (lte c $hi)) 1 -1)
-  }))
+  (def Range (fun (lo hi) (fun (input start end groups)
+    {block
+      (def c (strings.at input start))
+      (if (and (gte c lo) (lte c hi)) 1 -1)
+    }
+  )))
 
   ;; Or - matches a or b (fails if both do not match)
 
-  (def Or (mac (a b)
-    &(if (neq -1 (def or_m $a)) or_m (if (neq -1 (def or_m $b)) or_m -1))
-  ))
+  (def Or (fun (f g) (fun (input start end group)
+    (if (neq -1 (def m  (f input start end group))) m
+    (if (neq -1 (def m2 (g input start end group))) m2
+                                                    -1))
+  )))
 
   ;; And - matches a then b (fails if a fails, or a works and b fails)
 
-  (def And [mac (a b)
-    &{block
-      (def and_start start) ;;_start will be made hygenic
-      (if
-        (neq -1 (def and_m1 $a))
-        [block
-          (set start (add and_start and_m1))
-          (if (neq -1 (def and_m2 $b)) (add and_m1 and_m2) -1)
-        ]
-        -1
-      )
-    }])
+  (def And (fun (f g) (fun (input start end group)
+    (if (eq -1 (def m  (f input         start end group))) -1
+    (if (eq -1 (def m2 (g input (add m start) end group))) -1
+                                                           (add m m2)))
+  )))
 
   ;; Many - matches 0 or more a. never fails, just matches zero times.
-
-  (def Many [mac (a) &{block
-    (def many_m (def many_m2 0))
-    (def _start start)
-    (loop (neq -1 (def many_m $a))
-      (block
-        (set start (set _start (add _start many_m)))
-        (set many_m2 (add many_m2 many_m))
-      )
-    )
-    many_m2
-  }])
+  ;;        can infinite loop if another zero matching rule is inside it.
+  ;;        or within or (Or (Maybe x) y) (Maybe x) will always match
+  [def Many (fun (f) (fun (input s e g)
+    ((fun R (sum m)
+      (if (neq -1 m) (R (add m sum) (f input (add sum s) e g)) sum)
+    ) 0 0)
+  ))]
 
   ;; More - matches one or more times. fails if the first match fails.
 
-  (def More [mac (a) &(And $a (Many $a))])
+  (def More [fun (a) (And a (Many a))])
 
   ;; Maybe - matches zero or one times. never fails.
 
-  (def Maybe [mac (a) &(Or $a 0)])
+  (def Empty (fun (i s e g) 0 ))
 
+  (def Maybe [fun (a) (Or a Empty)])
 
   ;; Map - transforms a match into a value.
   ;;       takes a rule, a type, and code
@@ -79,79 +65,27 @@
   ;;         it can see variables input start matched
   ;;         (see Text, below for an example)
 
-  [def Map (mac (rule type code) {block
-    (def M &matched)
-    &{block
-    (def _start start)
-
-    (if (neq -1 (def text_m $rule))
-      ;; if the rule matched, copy the text into group list
-    (block
-      (set start _start)
-      (def $(quote matched) text_m) ;;sets the var that the
-      (set group
-        (lists.set_tail group 1 (lists.create $type $code 0 0)))
-    ))
-    text_m
-  }})]
-
   ;; Text - captures text around a match.
 
   ;;        note that this just uses the Map rule, with string.slice
-
-  [def Text (mac (rule)
-    &(Map $rule 3 (strings.slice input start (add start matched)))
-  )]
 
   ;; Group - captures a list of items.
   ;;         any captures inside of this rule are added,
   ;;         including other groups
 
-  [def Group (mac (rule) &{block
-    (lists.set_tail group
-      1 (def parent (lists.create 1 (def new_group (lists.create 0 0 0 0)) 0 0)) )
-
-    (set group new_group)
-    (if (neq -1 (def m $rule))
-      ;; point `group` var back to list where our group started.
-      ;; it should still have an empty tail
-      (block
-        (lists.set_head parent 1 (lists.get_tail (lists.get_head parent)))
-        (set group parent)
-      )
-      ;; else, revert to the old group.
-      ;; TODO: free memory or implement GC
-      (block
-        ;; oh, need to undo the head pointer?
-        (lists.set_tail (lists.get_head parent) 0 0) ;;discard, but leave an empty group
-        (set group parent)
-      )
-    )
-    m
-  })]
-
   ;; Parser - takes a rule and returns a parse function, ready for export
-
-  (def Parser (mac (pattern) (block
-      &(fun (input start) {block
-        ;; note: $(quote group) is a hack so that the "group"
-        ;; var isn't changed by hygenic macros...
-        (def _G (def $(quote group) (lists.create 0 0 0 0)))
-        (def m $pattern)
-        (if (neq -1 m) (lists.get_tail _G) 0)
-      })
-    )
-  ))
 
   (export Match Match)
   (export And And)
   (export Or Or)
   (export Many Many)
-  (export More More)
-  (export Maybe Maybe)
-  (export Group Group)
-  (export Text Text)
-  (export Parser Parser)
-  (export Map Map)
-  (export Range Range)
+;;  (export More More)
+;;  (export Maybe Maybe)
+;;  (export Group Group)
+;;  (export Text Text)
+;;  (export Parser Parser)
+;;  (export Map Map)
+;;  (export Range Range)
+
+
 )

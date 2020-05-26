@@ -24,26 +24,26 @@
 
   ;; Or - matches a or b (fails if both do not match)
 
-  (def Or (fun (f g) (fun (input start end group)
-    (if (neq -1 (def m  (f input start end group))) m
-    (if (neq -1 (def m2 (g input start end group))) m2
-                                                    -1))
+  (def Or (fun (f g) (fun (i s e group)
+    (if (neq -1 (def m (f i s e group))) m
+    (if (neq -1 (def m (g i s e group))) m
+                                                  -1))
   )))
 
   ;; And - matches a then b (fails if a fails, or a works and b fails)
 
   (def And (fun (f g) (fun (input start end group)
-    (if (eq -1 (def m  (f input         start end group))) -1
-    (if (eq -1 (def m2 (g input (add m start) end group))) -1
-                                                           (add m m2)))
+    (if (eq -1 (def m (f input         start end group))) -1
+    (if (eq -1 (def n (g input (add m start) end group))) -1
+                                                          (add m n)))
   )))
 
   ;; Many - matches 0 or more a. never fails, just matches zero times.
   ;;        can infinite loop if another zero matching rule is inside it.
   ;;        or within or (Or (Maybe x) y) (Maybe x) will always match
-  [def Many (fun (f) (fun (input s e g)
+  [def Many (fun (f) (fun (i s e g)
     ((fun R (sum m)
-      (if (neq -1 m) (R (add m sum) (f input (add sum s) e g)) sum)
+      (if (neq -1 m) (R (add m sum) (f i (add m sum s) e g)) sum)
     ) 0 0)
   ))]
 
@@ -53,7 +53,7 @@
 
   ;; Maybe - matches zero or one times. never fails.
 
-  (def Empty (fun (i s e g) 0 ))
+  (def Empty (fun (i s e g) 0))
 
   (def Maybe [fun (a) (Or a Empty)])
 
@@ -86,6 +86,4 @@
 ;;  (export Parser Parser)
 ;;  (export Map Map)
 ;;  (export Range Range)
-
-
 )

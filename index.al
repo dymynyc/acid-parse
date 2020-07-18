@@ -1,7 +1,12 @@
 (module
   (def strings (import "acid-strings"))
+  (def a (import "./append"))
 ;;  (def lists   (import "acid-lists"))
 
+
+  (def log_i (system "sys" "log_i" (i)))
+  (def log (system "sys" "log" (string)))
+  (def log2 (system "sys" "log2" (i s e)))
   ;; matches an exact string either completely or not at all
 
   (def Match (fun (str) (block
@@ -65,6 +70,48 @@
   ;;         it can see variables input start matched
   ;;         (see Text, below for an example)
 
+  (def Map (fun (matcher type mapper) (fun (i s e g)
+    (if (neq -1 (def m (matcher i s e g)))
+      (block (a.append g type (mapper i s (add m s))) m)
+      -1
+    )
+  )))
+
+  [def Text (fun (matcher)
+    (Map matcher 3 (fun (i s e) (block
+      (log2 i s e)
+      (log (strings.slice i s e))
+    )))
+  )]
+
+  [def Group (fun (matcher) (fun (i s e g)
+    (block
+      (def g2 (a.init))
+;;      (def _head (l.get_head g))
+;;      (def _tail (l.get_tail g))
+;;      (l.set_head g 0 0)
+;;      (l.set_tail g 0 0)
+      (if (neq -1 (def m (matcher i s e g2)))
+        (block
+;;          (def v (l.get_head g))
+;;          (l.set_head g _h_t _head)
+;;          (l.set_tail g 1 _tail)
+          (a.append g 1 (l.get_head g2))
+          m
+        )
+        (block
+          
+;;          (l.set_head g _h_t _head)
+;;          (l.set_tail g 1 _tail)
+          ;;and free the any matched items
+          -1
+        )
+      )
+    )
+  ))]
+
+
+
   ;; Text - captures text around a match.
 
   ;;        note that this just uses the Map rule, with string.slice
@@ -79,10 +126,12 @@
   (export And And)
   (export Or Or)
   (export Many Many)
-;;  (export More More)
-;;  (export Maybe Maybe)
+  (export More More)
+  (export Maybe Maybe)
+  (export Empty Empty)
+
 ;;  (export Group Group)
-;;  (export Text Text)
+  (export Text Text)
 ;;  (export Parser Parser)
 ;;  (export Map Map)
 ;;  (export Range Range)
